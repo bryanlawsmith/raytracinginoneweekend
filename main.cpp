@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdlib>
 #include <cfloat>
 #include "vec3.hpp"
 #include "ray.hpp"
@@ -6,12 +7,24 @@
 #include "HittableList.hpp"
 #include "Camera.hpp"
 
+vec3 RandomInUnitSphere()
+{
+	vec3 p;
+	do
+	{
+		p = 2.0 * vec3(drand48(), drand48(), drand48()) - vec3(1, 1, 1);
+	} while (p.squaredLength() >= 1.0);
+
+	return p;
+}
+
 vec3 Color(const ray& r, Hittable* world)
 {
 	HitRecord rec;
-	if (world->Hit(r, 0.0, FLT_MAX, rec))
+	if (world->Hit(r, 0.001, FLT_MAX, rec))
 	{
-		return 	0.5 * vec3(rec.normal.x() + 1.0, rec.normal.y() + 1.0, rec.normal.z() + 1.0);
+		vec3 target = rec.p + rec.normal + RandomInUnitSphere();
+		return 	0.5 * Color(ray(rec.p, target-rec.p), world);
 	}
 	else
 	{
@@ -25,8 +38,8 @@ vec3 Color(const ray& r, Hittable* world)
 
 int main(int argc, char** argv)
 {
-	int nx = 400;
-	int ny = 200;
+	int nx = 1000;
+	int ny = 500;
 	int ns = 100;
 
 	std::cout << "P3\n" << nx << " " << ny << "\n255\n";
@@ -40,6 +53,7 @@ int main(int argc, char** argv)
 
 	for (int j = ny - 1; j >= 0; j--)
 	{
+		std::cerr << "scanline " << j << " completed.\n";
 		for (int i = 0; i < nx; i++)
 		{
 			vec3 accumulatedColor(0, 0, 0);
@@ -53,9 +67,9 @@ int main(int argc, char** argv)
 			}
 
 			accumulatedColor /= (float)ns;
-			int ir = (int)(255.99 * accumulatedColor[0]);
-			int ig = (int)(255.99 * accumulatedColor[1]);
-			int ib = (int)(255.99 * accumulatedColor[2]);
+			int ir = (int)(255.99 * sqrt(accumulatedColor[0]));
+			int ig = (int)(255.99 * sqrt(accumulatedColor[1]));
+			int ib = (int)(255.99 * sqrt(accumulatedColor[2]));
 
 			std::cout << ir << " " << ig << " " << ib << "\n";
 		}
