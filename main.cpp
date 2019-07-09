@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <cfloat>
+#include <omp.h>
+
 #include "vec3.hpp"
 #include "ray.hpp"
 #include "Sphere.hpp"
@@ -36,11 +38,23 @@ vec3 Color(const ray& r, Hittable* world)
 	}
 }
 
+vec3* g_Framebuffer;
+
+int omp_thread_count() {
+    int n = 0;
+    #pragma omp parallel reduction(+:n)
+    n += 1;
+    return n;
+}
+
 int main(int argc, char** argv)
 {
-	int nx = 1000;
-	int ny = 500;
-	int ns = 100;
+	int threads = omp_thread_count();
+	std::cerr << "Thredcount: " << threads << std::endl;
+
+	int nx = 1024;
+	int ny = 512;
+	int ns = 1;
 
 	std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
@@ -51,9 +65,11 @@ int main(int argc, char** argv)
 	list[1] = new Sphere(vec3(0, -100.5, -1), 100);
 	Hittable* world = new HittableList(list, 2);
 
-	for (int j = ny - 1; j >= 0; j--)
+	g_Framebuffer = new vec3[nx * ny];
+
+	#pragma omp parallel for
+	for (int j = 0; j < ny; j++)
 	{
-		std::cerr << "scanline " << j << " completed.\n";
 		for (int i = 0; i < nx; i++)
 		{
 			vec3 accumulatedColor(0, 0, 0);
@@ -67,12 +83,25 @@ int main(int argc, char** argv)
 			}
 
 			accumulatedColor /= (float)ns;
-			int ir = (int)(255.99 * sqrt(accumulatedColor[0]));
-			int ig = (int)(255.99 * sqrt(accumulatedColor[1]));
-			int ib = (int)(255.99 * sqrt(accumulatedColor[2]));
+
+			g_Framebuffer[i + j * nx] = accumulatedColor;
+		}
+		//std::cerr << "Scanline: " << j << " completed" << std::endl;
+	}
+
+	for (int j = ny - 1; j >= 0; j--)
+	{
+		for (int i = 0; i < nx; i++)
+		{
+			int currentOffset = i + j * nx;
+
+			int ir = (int)(255.99 * sqrt(g_Framebuffer[currentOffset][0]));
+			int ig = (int)(255.99 * sqrt(g_Framebuffer[currentOffset][1]));
+			int ib = (int)(255.99 * sqrt(g_Framebuffer[currentOffset][2]));
 
 			std::cout << ir << " " << ig << " " << ib << "\n";
 		}
 	}
+
 	return 0;
 }
