@@ -8,29 +8,31 @@
 #include "Sphere.hpp"
 #include "HittableList.hpp"
 #include "Camera.hpp"
+#include "Material.hpp"
+#include "Lambertian.hpp"
+#include "Metal.hpp"
 
-vec3 RandomInUnitSphere()
-{
-	vec3 p;
-	do
-	{
-		p = 2.0 * vec3(drand48(), drand48(), drand48()) - vec3(1, 1, 1);
-	} while (p.squaredLength() >= 1.0);
+#define MAX_DEPTH 50
 
-	return p;
-}
-
-vec3 Color(const ray& r, Hittable* world)
+vec3 Color(const ray& r, Hittable* world, int depth)
 {
 	HitRecord rec;
 	if (world->Hit(r, 0.001, FLT_MAX, rec))
 	{
-		vec3 target = rec.p + rec.normal + RandomInUnitSphere();
-		return 	0.5 * Color(ray(rec.p, target-rec.p), world);
+		ray scattered;
+		vec3 attenuation;
+		if (depth < MAX_DEPTH && rec.material->Scatter(r, rec, attenuation, scattered))
+		{
+			return attenuation * Color(scattered, world, depth + 1);
+		}
+		else
+		{
+			return vec3(0, 0, 0);
+		}
 	}
 	else
 	{
-		vec3 unitDirection = unitVector(r.Direction());
+		vec3 unitDirection = unit(r.Direction());
 
 		float t = 0.5 * (unitDirection.y() + 1.0);
 
@@ -52,18 +54,20 @@ int main(int argc, char** argv)
 	int threads = omp_thread_count();
 	std::cerr << "Thredcount: " << threads << std::endl;
 
-	int nx = 1024;
-	int ny = 512;
-	int ns = 1;
+	int nx = 2048;
+	int ny = 1024;
+	int ns = 100;
 
 	std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
 	Camera cam;
 
-	Hittable* list[2];
-	list[0] = new Sphere(vec3(0, 0, -1), 0.5);
-	list[1] = new Sphere(vec3(0, -100.5, -1), 100);
-	Hittable* world = new HittableList(list, 2);
+	Hittable* list[4];
+	list[0] = new Sphere(vec3(0, 0, -1), 0.5, new Lambertian(vec3(0.8, 0.3, 0.3)));
+	list[1] = new Sphere(vec3(0, -100.5, -1), 100, new Lambertian(vec3(0.8, 0.8, 0.0)));
+	list[2] = new Sphere(vec3(1, 0, -1), 0.5, new Metal(vec3(0.8, 0.6, 0.2)));
+	list[3] = new Sphere(vec3(-1, 0, -1), 0.5, new Metal(vec3(0.8, 0.8, 0.8)));
+	Hittable* world = new HittableList(list, 4);
 
 	g_Framebuffer = new vec3[nx * ny];
 
@@ -79,7 +83,7 @@ int main(int argc, char** argv)
 				float v = (float)(j + drand48()) / (float)ny;
 				ray r = cam.GetRay(u, v);
 				vec3 p = r.PointAtParameter(2.0);
-				accumulatedColor += Color(r, world);
+				accumulatedColor += Color(r, world, 0);
 			}
 
 			accumulatedColor /= (float)ns;

@@ -159,7 +159,7 @@ inline vec3& vec3::operator/=(const float t)
 	return *this;
 }
 
-inline vec3 unitVector(const vec3& v)
+inline vec3 unit(const vec3& v)
 {
 	return v / v.length();
 }

@@ -1,5 +1,5 @@
 CC:=clang++
-CFLAGS:=-O3
+CFLAGS:=-O3 -std=c++11
 
 # Detect which operating system we're currently building for.
 ifeq ($(OS), Windows_NT)

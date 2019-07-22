@@ -14,6 +14,7 @@ public:
 	{
 		m_Origin = origin;
 		m_Direction = direction;
+		m_Direction.normalize();
 	}
 
 	vec3 Origin() const { return m_Origin; }

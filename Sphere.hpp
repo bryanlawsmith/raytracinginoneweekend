@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Hittable.hpp"
+#include "Material.hpp"
 
 class Sphere : public Hittable
 {
@@ -8,17 +9,19 @@ public:
 
 	vec3 m_Centre;
 	float m_Radius;
+	Material* m_Material;
 
 	Sphere() {}
-	Sphere(vec3 centre, float r);
+	Sphere(vec3 centre, float r, Material* material);
 
 	// Hittable interface implementation.
 	virtual bool Hit(const ray& r, float tMin, float tMax, HitRecord& record) const;
 };
 
-Sphere::Sphere(vec3 centre, float r)
+Sphere::Sphere(vec3 centre, float r, Material* material)
 : m_Centre(centre)
 , m_Radius(r)
+, m_Material(material)
 {}
 
 bool Sphere::Hit(const ray& r, float tMin, float tMax, HitRecord& record) const
@@ -36,6 +39,7 @@ bool Sphere::Hit(const ray& r, float tMin, float tMax, HitRecord& record) const
 			record.t = temp;
 			record.p = r.PointAtParameter(record.t);
 			record.normal = (record.p - m_Centre) / m_Radius;
+			record.material = m_Material;
 			return true;
 		}
 
@@ -45,6 +49,7 @@ bool Sphere::Hit(const ray& r, float tMin, float tMax, HitRecord& record) const
 			record.t = temp;
 			record.p = r.PointAtParameter(record.t);
 			record.normal = (record.p - m_Centre) / m_Radius;
+			record.material = m_Material;
 			return true;
 		}
 	}
