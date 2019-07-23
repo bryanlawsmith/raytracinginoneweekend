@@ -14,6 +14,8 @@ public:
 	{
 		m_Origin = origin;
 		m_Direction = direction;
+
+		// TODO: Do we need to normalize the ray direction?
 		m_Direction.normalize();
 	}
 

@@ -43,10 +43,10 @@ vec3 Color(const ray& r, Hittable* world, int depth)
 vec3* g_Framebuffer;
 
 int omp_thread_count() {
-    int n = 0;
-    #pragma omp parallel reduction(+:n)
-    n += 1;
-    return n;
+	int n = 0;
+	#pragma omp parallel reduction(+:n)
+	n += 1;
+	return n;
 }
 
 int main(int argc, char** argv)
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 
 	int nx = 2048;
 	int ny = 1024;
-	int ns = 100;
+	int ns = 10;
 
 	std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
@@ -65,8 +65,8 @@ int main(int argc, char** argv)
 	Hittable* list[4];
 	list[0] = new Sphere(vec3(0, 0, -1), 0.5, new Lambertian(vec3(0.8, 0.3, 0.3)));
 	list[1] = new Sphere(vec3(0, -100.5, -1), 100, new Lambertian(vec3(0.8, 0.8, 0.0)));
-	list[2] = new Sphere(vec3(1, 0, -1), 0.5, new Metal(vec3(0.8, 0.6, 0.2)));
-	list[3] = new Sphere(vec3(-1, 0, -1), 0.5, new Metal(vec3(0.8, 0.8, 0.8)));
+	list[2] = new Sphere(vec3(1, 0, -1), 0.5, new Metal(vec3(0.8, 0.6, 0.2), 0.3));
+	list[3] = new Sphere(vec3(-1, 0, -1), 0.5, new Metal(vec3(0.8, 0.8, 0.8), 1.0));
 	Hittable* world = new HittableList(list, 4);
 
 	g_Framebuffer = new vec3[nx * ny];
